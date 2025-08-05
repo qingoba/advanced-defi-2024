@@ -1,66 +1,10 @@
-## Foundry
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+## Exercise Test
 
-Foundry consists of:
+我们在测试网上运行测试用例, 使用 alchemy 平台提供的 FROK_URL.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+在 alchemy 上, FORK_URL 在 App 上提供, 目前使用的 App 链接https://dashboard.alchemy.com/apps/lz79ljf7pibyds2f/setup, 使用 Google 账号登陆
 
-## Documentation
+在构建之前, 先 `export FORK_URL=https://eth-mainnet.g.alchemy.com/v2/xCiveK4PE1ixtwHhQfZmy1NLIDRdVTRG`
 
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+构建并执行: `forge test --fork-url $FORK_URL --match-path test/uniswap-v2/exercises/UniswapV2Liquidity.test.sol`

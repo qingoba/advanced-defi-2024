@@ -53,12 +53,14 @@ contract UniswapV2SwapTest is Test {
 
         // Write your code here
         // Don’t change any other code
+        // 这里要以用户 user 的身份去发起兑换, 如果不写 vm.prank(user) 则相当于以 router 的身份执行的兑换
+        // 而这里 setUp 是给 user 进行的设置
+        // 调用函数时, 可以使用 key-value arguments 而不是 position arguments 提高可读性
+        vm.prank(user);
         uint256[] memory amounts = router.swapExactTokensForTokens(amountIn, amountOutMin, path, user, block.timestamp);
         console2.log("WETH", amounts[0]);
         console2.log("DAI", amounts[1]);
         console2.log("MKR", amounts[2]);
-
-
 
         assertGe(mkr.balanceOf(user), amountOutMin, "MKR balance of user");
     }
@@ -76,6 +78,22 @@ contract UniswapV2SwapTest is Test {
 
         // Write your code here
         // Don’t change any other code
+        // 值得注意的是, 无论以哪种方式从 WETH 兑换 MKR, path 数组都是一样的,
+        // 都是 WETH->DAI->MKR
+        vm.prank(user);
+        uint256[] memory amounts = router.swapTokensForExactTokens(
+            {
+                amountOut: amountOut,
+                amountInMax: amountInMax,
+                path: path,
+                to: user,
+                deadline: block.timestamp
+            }
+        );
+        console2.log(amounts[0]);
+        console2.log(amounts[1]);
+        console2.log(amounts[2]);
+
 
         assertEq(mkr.balanceOf(user), amountOut, "MKR balance of user");
     }
