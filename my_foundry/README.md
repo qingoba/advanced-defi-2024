@@ -1,4 +1,3 @@
-
 ## Exercise Test
 
 我们在测试网上运行测试用例, 使用 alchemy 平台提供的 FROK_URL.
@@ -7,4 +6,7 @@
 
 在构建之前, 先 `export FORK_URL=https://eth-mainnet.g.alchemy.com/v2/xCiveK4PE1ixtwHhQfZmy1NLIDRdVTRG`
 
+进入我的 Foundry 目录: `cd my_foundry`
+
 构建并执行: `forge test --fork-url $FORK_URL --match-path test/uniswap-v2/exercises/UniswapV2Liquidity.test.sol`
+
