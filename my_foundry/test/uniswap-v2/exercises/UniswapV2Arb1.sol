@@ -33,16 +33,16 @@ contract UniswapV2Arb1 {
         // Don’t change any other code
 
         // (1) 首先将用户的代币转入到当前合约中
-        IERC20(params.tokenIn).approve(msg.sender, params.amountIn);
+        // IERC20(params.tokenIn).approve(msg.sender, params.amountIn);
         bool ret = IERC20(params.tokenIn).transferFrom(msg.sender, address(this), params.amountIn);
         require(ret, "transfer token from user failed");
-        IERC20(params.tokenIn).approve(params.router0, params.amountIn);
 
         // (2) 调用 Router0 合约执行一次兑换, 换出的代币仍然存在当前合约里
         //     调用 swapExactTokensForTokens 需要指定 amoutOutMin, path 和 timestamp
         //     - amoutOutMin 用户设置滑点
         //     - path 指定兑换路径
         //     - timestamp 如何指定?
+        IERC20(params.tokenIn).approve(params.router0, params.amountIn);
         address[] memory path = new address[](2);
         path[0] = params.tokenIn;
         path[1] = params.tokenOut;
@@ -53,6 +53,7 @@ contract UniswapV2Arb1 {
             params.amountIn, amountOutMin, path, address(this), block.timestamp + 60)[1];
         
         // (3) 调用 Router1 合约执行另一次兑换, 换出的代币仍然存在当前合约里
+        IERC20(params.tokenOut).approve(params.router1, amountOutReal);
         address[] memory path1 = new address[](2);
         path1[0] = params.tokenOut;
         path1[1] = params.tokenIn;
