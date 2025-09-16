@@ -85,6 +85,22 @@ contract UniswapV2Arb1 {
     {
         // Write your code here
         // Don’t change any other code
+
+        // (1) 携带大于零的 amount0Out 或 amount1Out, 以及合约地址, data, 去调用 swap
+        //     swap 函数内部会回调当前合约的 uniswapV2Call 函数, 在 uniswapV2Call 函数中执行具体套利操作
+        if (isToken0)
+        {
+            IUniswapV2Pair(pair).swap(0, 0, address(this), abi.encode(params));
+
+            // (7) 套利执行完毕, 将所有代币余额转给用户
+            IERC20(params.tokenIn).transfer(msg.sender, IERC20(params.tokenIn).balanceOf(address(this)));
+        }
+        // else
+        // {
+        //     IUniswapV2Pair(pair).swap(0, params.amountIn, address(this), abi.encode(params));
+        //     IERC20(params.tokenIn).transfer(msg.sender, IERC20(params.tokenIn).balanceOf(address(this)));
+        // }
+        
     }
 
     function uniswapV2Call(
@@ -92,8 +108,40 @@ contract UniswapV2Arb1 {
         uint256 amount0Out,
         uint256 amount1Out,
         bytes calldata data
-    ) external {
+    ) external 
+    {
         // Write your code here
         // Don’t change any other code
+
+        // (2) 此时该合约中已经借到了代币, 执行和第一个任务几乎一样的操作即可, 只不过钱的来源不一样
+        //     需要先解码 data 中的数据
+        (address router0, address router1, address tokenIn, address tokenOut, uint256 amountIn, uint256 minProfit) = 
+            abi.decode(data, (address, address, address, address, uint256, uint256));
+        
+        // (3) 将借出的币转入第一个合约执行交换, 其实 amountBorrowed 就等于 amountIn
+        uint256 amountBorrowed = amount0Out > 0 ? amount0Out : amount1Out;
+        IERC20(tokenIn).approve(router0, amountBorrowed);
+        
+        // 第一次交换
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+        uint256 amountOutReal = IUniswapV2Router02(router0).swapExactTokensForTokens(
+            amountIn, 0, path, address(this), block.timestamp + 60)[1];
+        
+        // 第二次交换
+        IERC20(tokenOut).approve(router1, amountOutReal);
+        address[] memory path1 = new address[](2);
+        path1[0] = tokenOut;
+        path1[1] = tokenIn;
+        uint256 amountOutReal1 = IUniswapV2Router02(router1).swapExactTokensForTokens(
+            amountOutReal, 0, path1, address(this), block.timestamp + 60)[1];
+        
+        // 计算还款金额和利润
+        uint256 amountToRepay = amountBorrowed + (amountBorrowed * 3) / 997 + 1;
+        IERC20(tokenIn).transfer(msg.sender, amountToRepay);    // msg.sender 就是 Uniswap Pair 合约
+
+        // 判断利润
+        require(amountOutReal1 - amountToRepay >= minProfit, "profit is less than minProfit");
     }
 }
