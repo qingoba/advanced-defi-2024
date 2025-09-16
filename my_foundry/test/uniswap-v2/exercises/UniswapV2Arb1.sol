@@ -90,16 +90,16 @@ contract UniswapV2Arb1 {
         //     swap 函数内部会回调当前合约的 uniswapV2Call 函数, 在 uniswapV2Call 函数中执行具体套利操作
         if (isToken0)
         {
-            IUniswapV2Pair(pair).swap(0, 0, address(this), abi.encode(params));
+            IUniswapV2Pair(pair).swap(params.amountIn, 0, address(this), abi.encode(params));
 
             // (7) 套利执行完毕, 将所有代币余额转给用户
             IERC20(params.tokenIn).transfer(msg.sender, IERC20(params.tokenIn).balanceOf(address(this)));
         }
-        // else
-        // {
-        //     IUniswapV2Pair(pair).swap(0, params.amountIn, address(this), abi.encode(params));
-        //     IERC20(params.tokenIn).transfer(msg.sender, IERC20(params.tokenIn).balanceOf(address(this)));
-        // }
+        else
+        {
+            IUniswapV2Pair(pair).swap(0, params.amountIn, address(this), abi.encode(params));
+            IERC20(params.tokenIn).transfer(msg.sender, IERC20(params.tokenIn).balanceOf(address(this)));
+        }
         
     }
 
