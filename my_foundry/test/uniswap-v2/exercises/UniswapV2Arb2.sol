@@ -41,8 +41,25 @@ contract UniswapV2Arb2 {
     ) external {
         // Write your code here
         // Don’t change any other code
-
         // Hint - use getAmountOut to calculate amountOut to borrow
+
+        // (0) 首先需要明确这个练习的是从第一个合约借出一种代币 (比如 ETH), 最后归还另一种代币 (比如 DAI)
+        //     所以 isZeroForOne == true 的含义是, 借出 token1, 归还 token0. 这就很有意思了
+
+        // (1) 比较难的是, 如何计算应该归还的代币数量, 因为手续费不好计算
+        //     测试用例已经帮我们计算好了, 我们应该归还的数量就是 amountIn, 那么就能用 getAmountOut 计算能借出的数量,
+        //     这样做手续费是在 Pair 合约里计算的, 不用我们自己算.
+        //     所以第一步就是计算应该借出的代币数量: 先获取储备量, 然后调用 getAmountOut 计算
+        uint256 amountOut = 0;
+        (uint256 reserve0, uint256 reserve1, ) = IUniswapV2Pair(pair0).getReserves();
+        amountOut = getAmountOut({
+            amountIn: amountIn,
+            reserveIn: isZeroForOne ? reserve0 : reserve1,  // 传入 token0
+            reserveOut: isZeroForOne ? reserve1 : reserve0  // 换出 token1
+        });
+
+        // (2) 调用 flashswap 并回调套利逻辑
+
     }
 
     function uniswapV2Call(
