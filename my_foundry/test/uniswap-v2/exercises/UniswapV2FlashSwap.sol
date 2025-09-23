@@ -28,11 +28,24 @@ contract UniswapV2FlashSwap {
 
         // 1. Determine amount0Out and amount1Out
         (uint256 amount0Out, uint256 amount1Out) = (0, 0);
+        if (token == token0) {
+            amount0Out = amount;
+            amount1Out = 0;
+        } else {
+            amount0Out = 0;
+            amount1Out = amount;
+        }
 
         // 2. Encode token and msg.sender as bytes
-        bytes memory data;
+        bytes memory data = abi.encode(token, msg.sender);
 
         // 3. Call pair.swap
+        pair.swap({
+            amount0Out: amount0Out,    // 应该借出的 token0 的数量
+            amount1Out: amount1Out,    // 应该借出的 token1 的数量
+            to: address(this),
+            data: data
+        });
     }
 
     // Uniswap V2 callback
@@ -51,18 +64,25 @@ contract UniswapV2FlashSwap {
         //                    <-- sender = FlashSwap --
         // Eve ------------ to = FlashSwap -----------> UniswapV2Pair
         //          FlashSwap <-- sender = Eve --------
+        require(msg.sender == address(pair), "caller of uniswapV2Call is not Uniswap v2 Pair");
+        require(sender == address(this), "caller of Pair.swap() is not this contract");
 
         // 3. Decode token and caller from data
-        (address token, address caller) = (address(0), address(0));
+        (address token, address caller) = abi.decode(data, (address, address));
+
         // 4. Determine amount borrowed (only one of them is > 0)
-        uint256 amount = 0;
+        uint256 amount = amount0 > 0 ? amount0 : amount1;
 
         // 5. Calculate flash swap fee and amount to repay
         // fee = borrowed amount * 3 / 997 + 1 to round up
-        uint256 fee = 0;
-        uint256 amountToRepay = 0;
+        uint256 fee = amount * 3 / 997 + 1;
+        uint256 amountToRepay = amount + fee;
 
         // 6. Get flash swap fee from caller
+        //    在测试用例中已经提前授权过了
+        IERC20(token).transferFrom(caller, address(this), fee); 
+
         // 7. Repay Uniswap V2 pair
+        IERC20(token).transfer(address(pair), amountToRepay);
     }
 }
